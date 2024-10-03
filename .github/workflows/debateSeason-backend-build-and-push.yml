@@ -1,0 +1,103 @@
+name: Backend Build, Test, and Push
+
+on:
+  push:
+    # main 과 feature 로 시작하는 브랜치에 push 될 때 워크플로우가 실행
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    # main 브랜치에 pull request 될 때 워크플로우가 실행
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Grant execute permission for gradlew
+        run: chmod +x demo/gradlew
+      - name: Build with Gradle
+        run: cd demo && ./gradlew build -x test
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: demo/build/libs/*.jar
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Grant execute permission for gradlew
+        run: chmod +x demo/gradlew
+      - name: Run tests
+        run: cd demo && ./gradlew test
+
+  build-and-push:
+    needs: [build, test]
+    # 가장 최신의 Ubuntu 러너를 사용
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      # 현재 리포지토리를 체크아웃
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      # Docker Buildx를 설정
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      # pull request 와 feature 브랜치의 불필요한 로그인을 방지
+      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      uses: docker/login-action@v3
+      with:
+        # GitHub Secret에서 Docker Hub 사용자 이름을 가져옴
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        # GitHub Secret에서 Docker Hub 액세스 토큰을 가져옴
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and Push
+      uses: docker/build-push-action@v6
+      with:
+        # Dockerfile이 있는 위치
+        context: ./demo
+        # 이미지 빌드를 위한 Dockerfile의 경로
+        file: ./demo/Dockerfile
+        # pull request 가 아니고 브랜치가 main 이면 이미지를 레지스트리에 푸시
+        push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+        # 다중 태그 사용: github.sha(커밋 id), latest(최신 버전 참조용)
+        tags: |
+          ${{ secrets.DOCKER_REPOSITORY }}/backend:${{ github.sha }}
+          ${{ secrets.DOCKER_REPOSITORY }}/backend:latest
+        platforms: linux/amd64,linux/arm64
