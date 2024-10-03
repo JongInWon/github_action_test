@@ -10,7 +10,7 @@ COPY build.gradle settings.gradle ./
 RUN gradle dependencies --no-daemon
 
 # 호스트 머신의 소스코드를 작업 디렉토리로 복사
-COPY .. /app
+COPY . /app
 
 # Gradle 빌드를 실행하여 JAR 파일 생성
 RUN gradle clean build --no-daemon
@@ -22,7 +22,7 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # 빌드 이미지에서 생성된 JAR 파일을 런타임 이미지로 복사
-COPY --from=build /app/build/libs/debateSeason-backend-0.0.1.jar /app/demo.jar
+COPY --from=build /app/build/libs/*.jar /app/demo.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java"]
