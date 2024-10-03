@@ -3,7 +3,7 @@ name: Backend Build, Test, and Push
 on:
   push:
     # main 과 feature 로 시작하는 브랜치에 push 될 때 워크플로우가 실행
-    branches: [ main, 'feature/*' ]
+    branches: [ main ]
   pull_request:
     # main 브랜치에 pull request 될 때 워크플로우가 실행
     branches: [ main ]
