@@ -94,6 +94,6 @@ jobs:
         push: true
         # 다중 태그 사용: github.sha(커밋 id), latest(최신 버전 참조용)
         tags: |
-          ${{ secrets.DOCKER_USERNAME }}/github_actions:${{ github.sha }}
-          ${{ secrets.DOCKER_USERNAME }}/github_actions:latest
+          ${{ secrets.DOCKERHUB_USERNAME }}/github_actions:${{ github.sha }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/github_actions:latest
         platforms: linux/amd64,linux/arm64
