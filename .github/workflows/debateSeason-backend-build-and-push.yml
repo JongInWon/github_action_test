@@ -14,12 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
       - name: Cache Gradle packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -32,7 +32,7 @@ jobs:
       - name: Build with Gradle
         run: cd demo && ./gradlew build -x test
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: demo/build/libs/*.jar
@@ -43,12 +43,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
       - name: Cache Gradle packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -94,6 +94,6 @@ jobs:
         push: true
         # 다중 태그 사용: github.sha(커밋 id), latest(최신 버전 참조용)
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/github_actions:${{ github.sha }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/github_actions:latest
+          ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_USERNAME }}:${{ github.sha }}
+          ${{ secrets.DOCKER_USERNAME }}/github_actions:latest
         platforms: linux/amd64,linux/arm64
